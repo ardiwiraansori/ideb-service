@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:flowable="http://flowable.org/bpmn"
+        targetNamespace="http://skyworx.com/ideb">
+
+    <error
+            id="scrapeError"
+            name="Scrape Error"
+            errorCode="SCRAPE_ERROR" />
+
+    <error
+            id="pdfError"
+            name="PDF Error"
+            errorCode="PDF_ERROR" />
+
+    <process
+            id="idebProcess"
+            name="IDEB Process"
+            isExecutable="true">
+
+        <startEvent
+                id="startEvent"
+                name="Start" />
+
+        <serviceTask
+                id="scrapeDataTask"
+                name="Scrape Data Eksternal"
+                flowable:delegateExpression="${scrapeDataDelegate}"
+                flowable:async="true" />
+
+        <boundaryEvent
+                id="scrapeErrorBoundary"
+                name="Scrape Error"
+                attachedToRef="scrapeDataTask">
+
+            <errorEventDefinition
+                    errorRef="scrapeError" />
+
+        </boundaryEvent>
+
+        <serviceTask
+                id="saveReportTask"
+                name="Simpan ke DB"
+                flowable:delegateExpression="${saveReportDelegate}" />
+
+        <serviceTask
+                id="validateDataTask"
+                name="Validasi Data"
+                flowable:delegateExpression="${validateDataDelegate}" />
+
+        <serviceTask
+                id="generatePdfTask"
+                name="Generate PDF"
+                flowable:delegateExpression="${generatePdfDelegate}" />
+
+        <boundaryEvent
+                id="pdfErrorBoundary"
+                name="PDF Error"
+                attachedToRef="generatePdfTask">
+
+            <errorEventDefinition
+                    errorRef="pdfError" />
+
+        </boundaryEvent>
+
+        <serviceTask
+                id="logFailureTask"
+                name="Catat Kegagalan"
+                flowable:delegateExpression="${logFailureDelegate}" />
+
+        <endEvent
+                id="errorEndEvent"
+                name="Error End" />
+
+
+        <endEvent
+                id="endEvent"
+                name="End" />
+
+        <sequenceFlow
+                id="flowStartToScrape"
+                sourceRef="startEvent"
+                targetRef="scrapeDataTask" />
+
+        <sequenceFlow
+                id="flowScrapeToValidate"
+                sourceRef="scrapeDataTask"
+                targetRef="validateDataTask" />
+
+        <sequenceFlow
+                id="flowValidateToGeneratePdf"
+                sourceRef="validateDataTask"
+                targetRef="generatePdfTask" />
+
+        <sequenceFlow
+                id="flowGeneratePdfToSave"
+                sourceRef="generatePdfTask"
+                targetRef="saveReportTask" />
+
+        <sequenceFlow
+                id="flowSaveToEnd"
+                sourceRef="saveReportTask"
+                targetRef="endEvent" />
+
+        <sequenceFlow
+                id="flowScrapeErrorToLog"
+                sourceRef="scrapeErrorBoundary"
+                targetRef="logFailureTask" />
+
+        <sequenceFlow
+                id="flowLogFailureToErrorEnd"
+                sourceRef="logFailureTask"
+                targetRef="errorEndEvent" />
+
+        <sequenceFlow
+                id="flowPdfErrorToLog"
+                sourceRef="pdfErrorBoundary"
+                targetRef="logFailureTask" />
+
+    </process>
+
+</definitions>

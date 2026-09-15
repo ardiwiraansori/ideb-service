@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket IDEB Test</title>
+</head>
+<body>
+
+<h1>WebSocket IDEB Test</h1>
+
+<p id="connection-status">
+    Status: Belum terhubung
+</p>
+
+<h3>Pesan diterima:</h3>
+
+<pre id="messages"></pre>
+
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+
+<script>
+    const statusElement =
+        document.getElementById("connection-status");
+
+    const messagesElement =
+        document.getElementById("messages");
+
+    const client = new StompJs.Client({
+        brokerURL: "ws://localhost:8080/ws",
+
+        reconnectDelay: 5000,
+
+        onConnect: function () {
+
+            statusElement.textContent =
+                "Status: CONNECTED";
+
+            console.log("WebSocket connected");
+
+            client.subscribe(
+                "/topic/ideb",
+                function (message) {
+
+                    console.log(
+                        "Pesan diterima:",
+                        message.body
+                    );
+
+                    messagesElement.textContent +=
+                        message.body + "\n";
+                }
+            );
+        },
+
+        onStompError: function (frame) {
+            console.error(
+                "STOMP error:",
+                frame
+            );
+        },
+
+        onWebSocketError: function (error) {
+            console.error(
+                "WebSocket error:",
+                error
+            );
+        }
+    });
+
+    client.activate();
+</script>
+
+</body>
+</html>
